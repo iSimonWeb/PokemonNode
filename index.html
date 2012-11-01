@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>PokèmonNode</title>
+	
+	<script src="/js/jquery-1.8.2.js"></script>
+	<script src="/js/canvace-0.2.4.min.js"></script>
+	<style>
+		body {text-align: center;}
+		canvas {border: 1px solid black;}
+	</style>
+</head>
+
+<body>
+	<canvas width="900" height="400"></canvas>
+	
+	<script>
+		var mainCharacterStates, character, keyboard, characterSM;
+		
+		var modes = ['still', 'walking', 'running'];
+		var directions = ['left', 'up', 'right', 'down'];
+		
+		var moveKeys = {};
+		var stepTimer = null;
+		var resetCharacter = function(direction) {
+			character = character.replaceWith(mainCharacterStates.still[direction]);
+			character.getUniformVelocity().i = 0;
+			character.getUniformVelocity().j = 0;
+			stepTimer = null;
+		};
+		var userTick = function() {
+			moveKeys = {
+				left: keyboard.isKeyDown(KeyEvent.DOM_VK_LEFT),
+				up: keyboard.isKeyDown(KeyEvent.DOM_VK_UP),
+				right: keyboard.isKeyDown(KeyEvent.DOM_VK_RIGHT),
+				down: keyboard.isKeyDown(KeyEvent.DOM_VK_DOWN)
+			};
+			
+			if (stepTimer == null && moveKeys.left) {
+				character = character.replaceWith(mainCharacterStates.walking.left);
+				character.getUniformVelocity().i = -2.9;
+				stepTimer = setTimeout(resetCharacter, 350, ['left']);
+			}
+			if (stepTimer == null && moveKeys.up) {
+				character = character.replaceWith(mainCharacterStates.walking.up);
+				character.getUniformVelocity().j = -2.9;
+				stepTimer = setTimeout(resetCharacter, 350, ['up']);
+			}
+			if (stepTimer == null && moveKeys.right) {
+				character = character.replaceWith(mainCharacterStates.walking.right);
+				character.getUniformVelocity().i = 2.9;
+				stepTimer = setTimeout(resetCharacter, 350, ['right']);
+			}
+			if (stepTimer == null && moveKeys.down) {
+				character = character.replaceWith(mainCharacterStates.walking.down);
+				character.getUniformVelocity().j = 2.9;
+				stepTimer = setTimeout(resetCharacter, 350, ['down']);
+			}	
+		};
+		
+		$.getJSON('Pokemon.json', {}, function (response) {
+			var loader = new Canvace.Loader('media');
+			loader.loadImages(response, function () {
+				var canvas = $('canvas')[0];
+				var stage = new Canvace.Stage(response, canvas);
+				keyboard = new Canvace.Keyboard(window, true);
+				var loop = new Canvace.RenderLoop(stage, null, loader, userTick);
+				loop.run();
+				
+				mainCharacterStates = (function() {
+					var states = {};
+					
+					$.each(modes, function(i, mode) {
+						states[mode] = {};
+						
+						$.each(directions, function(j, direction) {
+							states[mode][direction] = stage.getEntity({
+								'mode': mode,
+								'direction': direction
+							});
+						});
+					});
+					
+					return states;
+				})();
+				character = stage.getInstance({});
+				$(window)
+					.on('focusout', function() {loop.suspend();})
+					.on('focusin', function() {loop.run();});
+			});
+		});
+		
+		characterSM = new Canvace.StateMachine({
+			
+		}, 'stillLeft');
+	</script>
+</body>
+</html>
