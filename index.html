@@ -30,11 +30,12 @@
 				right: keyboard.isKeyDown(KeyEvent.DOM_VK_D),
 				down: keyboard.isKeyDown(KeyEvent.DOM_VK_S)
 			};
+			var mode = (keyboard.isKeyDown(KeyEvent.DOM_VK_SPACE)) ? 'run' : 'walk';
 			
-			if (stepTimer == null && moveKeys.left) characterSM.walk('left');
-			if (stepTimer == null && moveKeys.up) characterSM.walk('up');
-			if (stepTimer == null && moveKeys.right) characterSM.walk('right');
-			if (stepTimer == null && moveKeys.down)	characterSM.walk('down');
+			if (stepTimer == null && moveKeys.left) characterSM[mode]('left');
+			if (stepTimer == null && moveKeys.up) characterSM[mode]('up');
+			if (stepTimer == null && moveKeys.right) characterSM[mode]('right');
+			if (stepTimer == null && moveKeys.down)	characterSM[mode]('down');
 		};
 		
 		$.getJSON('Pokemon.json', {}, function (response) {
@@ -78,10 +79,10 @@
 					down: 2.8571428571428571428571428571429
 				},
 				runningVelocities = {
-					left: -5.8,
-					up: -5.8,
-					right: 5.8,
-					down: 5.8
+					left: -6.6666666666666666666666666666667,
+					up: -6.6666666666666666666666666666667,
+					right: 6.6666666666666666666666666666667,
+					down: 6.6666666666666666666666666666667
 				},
 				directionAxis = {
 					left: 'i',
@@ -90,44 +91,44 @@
 					down: 'j'
 				};
 			
-			var resetCharacter = function(direction) {
-				var axis = directionAxis[direction];
+			var resetCharacter = function(direction, mode) {
+				var axis = directionAxis[direction],
+					mode = (keyboard.isKeyDown(KeyEvent.DOM_VK_SPACE)) ? 'running' : 'still';
 				
-				character = character.replaceWith(mainCharacterStates.still[direction]);
+				character = character.replaceWith(mainCharacterStates[mode][direction]);
 				character.getUniformVelocity()[axis] = 0;
 				character.getPosition()[axis] = Math.round(character.getPosition()[axis]);
 				stepTimer = null;
 			};
 			
 			$.each(directions, function(index, stateDirection) {
-				var directionCaptzed = stateDirection.charAt(0).toUpperCase() + stateDirection.substr(1);
-				
-				states['still' + directionCaptzed] = {
+				states[stateDirection] = {
 					walk: function(direction) {
 						if (direction == stateDirection) {
 							character = character.replaceWith(mainCharacterStates.walking[direction]);
 							character.getUniformVelocity()[directionAxis[direction]] = walkingVelocities[direction];
-							stepTimer = setTimeout(resetCharacter, 350, [direction]);
+							stepTimer = setTimeout(resetCharacter, 350, direction);
 							
-							return 'still' + directionCaptzed;
+							return stateDirection;
 						} else {
 							character = character.replaceWith(mainCharacterStates.walking[direction]);
-							stepTimer = setTimeout(resetCharacter, 50, [direction]);
+							stepTimer = setTimeout(resetCharacter, 70, direction);
 							
-							return 'still' + direction.charAt(0).toUpperCase() + direction.substr(1);
+							return direction;
 						}
 					},
 					run: function(direction) {
-						character = character.replaceWith(mainCharacterStates.walking[direction]);
+						character = character.replaceWith(mainCharacterStates.running[direction]);
 						character.getUniformVelocity()[directionAxis[direction]] = runningVelocities[direction];
+						stepTimer = setTimeout(resetCharacter, 150, direction);
 						
-						return 'running' + direction.charAt(0).toUpperCase() + direction.substr(1);
+						return direction;
 					}
 				};
 			});
 			
 			return states;
-		})(), 'stillDown');
+		})(), 'down');
 	</script>
 </body>
 </html>
