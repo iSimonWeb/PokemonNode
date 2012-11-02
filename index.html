@@ -23,12 +23,6 @@
 		
 		var moveKeys = {};
 		var stepTimer = null;
-		var resetCharacter = function(direction) {
-			character = character.replaceWith(mainCharacterStates.still[direction]);
-			character.getUniformVelocity().i = 0;
-			character.getUniformVelocity().j = 0;
-			stepTimer = null;
-		};
 		var userTick = function() {
 			moveKeys = {
 				left: keyboard.isKeyDown(KeyEvent.DOM_VK_LEFT),
@@ -37,26 +31,17 @@
 				down: keyboard.isKeyDown(KeyEvent.DOM_VK_DOWN)
 			};
 			
-			if (stepTimer == null && moveKeys.left) {
-				character = character.replaceWith(mainCharacterStates.walking.left);
-				character.getUniformVelocity().i = -2.9;
-				stepTimer = setTimeout(resetCharacter, 350, ['left']);
-			}
-			if (stepTimer == null && moveKeys.up) {
-				character = character.replaceWith(mainCharacterStates.walking.up);
-				character.getUniformVelocity().j = -2.9;
-				stepTimer = setTimeout(resetCharacter, 350, ['up']);
-			}
-			if (stepTimer == null && moveKeys.right) {
-				character = character.replaceWith(mainCharacterStates.walking.right);
-				character.getUniformVelocity().i = 2.9;
-				stepTimer = setTimeout(resetCharacter, 350, ['right']);
-			}
-			if (stepTimer == null && moveKeys.down) {
-				character = character.replaceWith(mainCharacterStates.walking.down);
-				character.getUniformVelocity().j = 2.9;
-				stepTimer = setTimeout(resetCharacter, 350, ['down']);
-			}	
+			if (stepTimer == null && moveKeys.left)
+				characterSM.walk('left');
+			
+			if (stepTimer == null && moveKeys.up)
+				characterSM.walk('up');
+			
+			if (stepTimer == null && moveKeys.right)
+				characterSM.walk('right');
+			
+			if (stepTimer == null && moveKeys.down)
+				characterSM.walk('down');
 		};
 		
 		$.getJSON('Pokemon.json', {}, function (response) {
@@ -91,9 +76,63 @@
 			});
 		});
 		
-		characterSM = new Canvace.StateMachine({
+		characterSM = new Canvace.StateMachine((function() {
+			var states = {},
+				walkingVelocities = {
+					left: -2.9,
+					up: -2.9,
+					right: 2.9,
+					down: 2.9
+				},
+				runningVelocities = {
+					left: -5.8,
+					up: -5.8,
+					right: 5.8,
+					down: 5.8
+				},
+				directionAxis = {
+					left: 'i',
+					up: 'j',
+					right: 'i',
+					down: 'j'
+				};
 			
-		}, 'stillLeft');
+			var resetCharacter = function(direction) {
+				character = character.replaceWith(mainCharacterStates.still[direction]);
+				character.getUniformVelocity()[directionAxis[direction]] = 0;
+				stepTimer = null;
+			};
+			
+			$.each(directions, function(index, stateDirection) {
+				var directionCaptzed = stateDirection.charAt(0).toUpperCase() + stateDirection.substr(1);
+				
+				states['still' + directionCaptzed] = {
+					walk: function(direction) {
+						if (direction == stateDirection) {
+							character = character.replaceWith(mainCharacterStates.walking[direction]);
+							character.getUniformVelocity()[directionAxis[direction]] = walkingVelocities[direction];
+							stepTimer = setTimeout(resetCharacter, 350, [direction]);
+							
+							return 'still' + directionCaptzed;
+						} else {
+							character = character.replaceWith(mainCharacterStates.walking[direction]);
+							stepTimer = setTimeout(resetCharacter, 50, [direction]);
+							
+							return 'still' + direction.charAt(0).toUpperCase() + direction.substr(1);
+						}
+					},
+					run: function(direction) {
+						character = character.replaceWith(mainCharacterStates.walking[direction]);
+						character.getUniformVelocity()[directionAxis[direction]] = runningVelocities[direction];
+						
+						return 'running' + direction.charAt(0).toUpperCase() + direction.substr(1);
+					}
+				};
+			});
+			//console.log(states);
+			return states;
+		})(), 'stillDown');
+		
 	</script>
 </body>
 </html>
