@@ -25,23 +25,16 @@
 		var stepTimer = null;
 		var userTick = function() {
 			moveKeys = {
-				left: keyboard.isKeyDown(KeyEvent.DOM_VK_LEFT),
-				up: keyboard.isKeyDown(KeyEvent.DOM_VK_UP),
-				right: keyboard.isKeyDown(KeyEvent.DOM_VK_RIGHT),
-				down: keyboard.isKeyDown(KeyEvent.DOM_VK_DOWN)
+				left: keyboard.isKeyDown(KeyEvent.DOM_VK_A),
+				up: keyboard.isKeyDown(KeyEvent.DOM_VK_W),
+				right: keyboard.isKeyDown(KeyEvent.DOM_VK_D),
+				down: keyboard.isKeyDown(KeyEvent.DOM_VK_S)
 			};
 			
-			if (stepTimer == null && moveKeys.left)
-				characterSM.walk('left');
-			
-			if (stepTimer == null && moveKeys.up)
-				characterSM.walk('up');
-			
-			if (stepTimer == null && moveKeys.right)
-				characterSM.walk('right');
-			
-			if (stepTimer == null && moveKeys.down)
-				characterSM.walk('down');
+			if (stepTimer == null && moveKeys.left) characterSM.walk('left');
+			if (stepTimer == null && moveKeys.up) characterSM.walk('up');
+			if (stepTimer == null && moveKeys.right) characterSM.walk('right');
+			if (stepTimer == null && moveKeys.down)	characterSM.walk('down');
 		};
 		
 		$.getJSON('Pokemon.json', {}, function (response) {
@@ -79,10 +72,10 @@
 		characterSM = new Canvace.StateMachine((function() {
 			var states = {},
 				walkingVelocities = {
-					left: -2.9,
-					up: -2.9,
-					right: 2.9,
-					down: 2.9
+					left: -2.8571428571428571428571428571429,
+					up: -2.8571428571428571428571428571429,
+					right: 2.8571428571428571428571428571429,
+					down: 2.8571428571428571428571428571429
 				},
 				runningVelocities = {
 					left: -5.8,
@@ -98,8 +91,11 @@
 				};
 			
 			var resetCharacter = function(direction) {
+				var axis = directionAxis[direction];
+				
 				character = character.replaceWith(mainCharacterStates.still[direction]);
-				character.getUniformVelocity()[directionAxis[direction]] = 0;
+				character.getUniformVelocity()[axis] = 0;
+				character.getPosition()[axis] = Math.round(character.getPosition()[axis]);
 				stepTimer = null;
 			};
 			
@@ -129,10 +125,9 @@
 					}
 				};
 			});
-			//console.log(states);
+			
 			return states;
 		})(), 'stillDown');
-		
 	</script>
 </body>
 </html>
